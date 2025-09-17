@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baykuş Rehberlik - Meslek Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 700px;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            background: white;
+            overflow: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+
+        @media (min-width: 768px) {
+            .chat-container {
+                height: 80vh;
+            }
+        }
+
+        .message-container {
+            word-wrap: break-word;
+        }
+
+        .user-message {
+            background-color: #007bff;
+            color: white;
+            border-radius: 1.5rem 1.5rem 0.5rem 1.5rem;
+            padding: 1rem;
+        }
+
+        .bot-message {
+            background-color: #f0f0f0;
+            color: #333;
+            border-radius: 1.5rem 1.5rem 1.5rem 0.5rem;
+            padding: 1rem;
+        }
+
+        .typing-indicator {
+            display: inline-block;
+        }
+
+        .dot {
+            height: 10px;
+            width: 10px;
+            background-color: #999;
+            border-radius: 50%;
+            display: inline-block;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: -0.32s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <!-- Başlık -->
+        <div class="p-4 bg-purple-500 text-white text-center rounded-t-lg">
+            <h1 class="text-2xl font-bold">Baykuş Rehberlik</h1>
+            <p class="text-sm">Geleceğinizi birlikte şekillendirelim!</p>
+        </div>
+
+        <!-- Sohbet geçmişi -->
+        <div id="chatbox" class="flex-grow p-4 overflow-y-auto space-y-4">
+            <!-- Mesajlar buraya gelecek -->
+        </div>
+
+        <!-- Form -->
+        <form id="chat-form" class="p-4 bg-gray-200 flex items-center space-x-2">
+            <input 
+                type="text" 
+                id="message-input" 
+                placeholder="Mesajını buraya yaz..."
+                class="flex-grow p-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-800"
+            />
+            <button 
+                type="submit" 
+                id="send-button"
+                class="bg-purple-600 hover:bg-purple-700 text-white font-bold p-3 rounded-full shadow-md focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const chatForm = document.getElementById('chat-form');
+        const messageInput = document.getElementById('message-input');
+        const chatbox = document.getElementById('chatbox');
+        const sendButton = document.getElementById('send-button');
+
+        const userId = localStorage.getItem('chatUserId') || Date.now().toString() + Math.random().toString(36).substring(2);
+        localStorage.setItem('chatUserId', userId);
+
+        let chatHistory = [];
+
+        window.onload = function() {
+            // İlk mesajı anında göster
+            const initialMessage = `Merhaba! 🦉🌟 Ben Baykuş Rehberlik, gelecekteki meslek seçimlerinde kafa karışıklığını gidermek için buradayım! 🎓✨
+
+Sana en doğru rehberliği sunabilmem için birkaç soru sormak istiyorum:
+
+1️⃣ Hangi alan türünde YKS sınavına gireceksin? (Sayısal, Sözel, Eşit Ağırlık veya Dil?)
+2️⃣ Bu alan türünde kararlı mısın yoksa değiştirmeyi düşünüyor musun? 🤔
+3️⃣ Kafanda düşündüğün bir meslek var mı? 💼
+4️⃣ Ne tür işlerden hoşlanırsın? (Masa başı mı, hareketli ve koşuşturmalı bir iş mi?) 🏃‍♂️💺
+5️⃣ Ailende yatkın olabileceğin veya ilham aldığın bir meslek var mı? 👨‍👩‍👧‍👦❣️
+
+Cevaplarını bekliyorum, hadi geleceğini birlikte şekillendirelim! 🚀😊`;
+            displayMessage('bot', initialMessage);
+
+            // Gizli bir mesajla sohbet geçmişini başlat
+            chatHistory.push({ role: 'user', parts: [{ text: 'Merhaba! Kendini tanıt ve ilk sorularını sor.' }] });
+            chatHistory.push({ role: 'model', parts: [{ text: initialMessage }] });
+        };
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            displayMessage('user', message);
+            messageInput.value = '';
+            chatHistory.push({ role: 'user', parts: [{ text: message }] });
+
+            const loadingMessageDiv = displayMessage('bot', '', true);
+            sendButton.disabled = true;
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message, userId, history: chatHistory }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Sunucudan bir hata döndü.');
+                }
+
+                const data = await response.json();
+                loadingMessageDiv.remove();
+                
+                const botResponse = data.response;
+                displayMessage('bot', botResponse);
+                chatHistory.push({ role: 'model', parts: [{ text: botResponse }] });
+
+            } catch (error) {
+                console.error('Mesaj gönderilirken hata:', error);
+                loadingMessageDiv.remove();
+                displayMessage('bot', 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.');
+            } finally {
+                sendButton.disabled = false;
+            }
+        });
+        
+        function displayMessage(sender, text, isTyping = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-container flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = `p-4 max-w-[80%] shadow-lg transition-all duration-300 ${sender === 'user' ? 'bg-purple-600 text-white rounded-tr-3xl rounded-tl-3xl rounded-bl-3xl' : 'bg-gray-200 text-gray-800 rounded-tr-3xl rounded-tl-3xl rounded-br-3xl'}`;
+
+            if (isTyping) {
+                contentDiv.innerHTML = `<span class="typing-indicator flex space-x-1">
+                                            <span class="dot"></span>
+                                            <span class="dot"></span>
+                                            <span class="dot"></span>
+                                        </span>`;
+            } else {
+                contentDiv.innerText = text;
+            }
+
+            messageDiv.appendChild(contentDiv);
+            chatbox.appendChild(messageDiv);
+            chatbox.scrollTop = chatbox.scrollHeight;
+
+            return messageDiv;
+        }
+    </script>
+</body>
+</html>
