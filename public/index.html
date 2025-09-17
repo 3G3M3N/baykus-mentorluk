@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Baykuş Rehberlik - Meslek Chatbot</title>
+    <title>Baykuş Mentörlük - Meslek Chatbot</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
@@ -40,20 +40,6 @@
             word-wrap: break-word;
         }
 
-        .user-message {
-            background-color: #007bff;
-            color: white;
-            border-radius: 1.5rem 1.5rem 0.5rem 1.5rem;
-            padding: 1rem;
-        }
-
-        .bot-message {
-            background-color: #f0f0f0;
-            color: #333;
-            border-radius: 1.5rem 1.5rem 1.5rem 0.5rem;
-            padding: 1rem;
-        }
-
         .typing-indicator {
             display: inline-block;
         }
@@ -83,6 +69,28 @@
                 transform: scale(1);
             }
         }
+
+        /* Prompt stilleri */
+        .prompt-container {
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+            padding: 0.75rem 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .prompt-btn {
+            background: #f3e8ff;
+            color: #6b21a8;
+            padding: 0.5rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .prompt-btn:hover {
+            background: #e9d5ff;
+        }
     </style>
 </head>
 <body>
@@ -90,7 +98,7 @@
     <div class="chat-container">
         <!-- Başlık -->
         <div class="p-4 bg-purple-500 text-white text-center rounded-t-lg">
-            <h1 class="text-2xl font-bold">Baykuş Rehberlik</h1>
+            <h1 class="text-2xl font-bold">Baykuş Mentörlük</h1>
             <p class="text-sm">Geleceğinizi birlikte şekillendirelim!</p>
         </div>
 
@@ -117,7 +125,14 @@
                 </svg>
             </button>
         </form>
+
+        <!-- Örnek Promptlar -->
+         <div style="margin-left: 30px;">Örnek Prompt:</div>
+        <div class="prompt-container">
+            <span class="prompt-btn">1) Sayısalım. 2)Kararlıyım gibi. 3) Mühendis olmak isterim ama hangi mühendislik emin değilim. 4) Biraz daha koşuşturmalı işler olabilir insanlarla diyalog da hoşuma gidiyor. 5) Ailemden ilham aldığım bir meslek yok. </span>
+        </div>
     </div>
+    
 
     <script>
         const chatForm = document.getElementById('chat-form');
@@ -131,8 +146,7 @@
         let chatHistory = [];
 
         window.onload = function() {
-            // İlk mesajı anında göster
-            const initialMessage = `Merhaba! 🦉🌟 Ben Baykuş Rehberlik, gelecekteki meslek seçimlerinde kafa karışıklığını gidermek için buradayım! 🎓✨
+            const initialMessage = `Merhaba! 🦉🌟 Ben Baykuş Meslek Asistanı, gelecekteki meslek seçimlerinde kafa karışıklığını gidermek için buradayım! 🎓✨
 
 Sana en doğru rehberliği sunabilmem için birkaç soru sormak istiyorum:
 
@@ -145,7 +159,6 @@ Sana en doğru rehberliği sunabilmem için birkaç soru sormak istiyorum:
 Cevaplarını bekliyorum, hadi geleceğini birlikte şekillendirelim! 🚀😊`;
             displayMessage('bot', initialMessage);
 
-            // Gizli bir mesajla sohbet geçmişini başlat
             chatHistory.push({ role: 'user', parts: [{ text: 'Merhaba! Kendini tanıt ve ilk sorularını sor.' }] });
             chatHistory.push({ role: 'model', parts: [{ text: initialMessage }] });
         };
@@ -169,9 +182,7 @@ Cevaplarını bekliyorum, hadi geleceğini birlikte şekillendirelim! 🚀😊`;
                     body: JSON.stringify({ message, userId, history: chatHistory }),
                 });
 
-                if (!response.ok) {
-                    throw new Error('Sunucudan bir hata döndü.');
-                }
+                if (!response.ok) throw new Error('Sunucudan bir hata döndü.');
 
                 const data = await response.json();
                 loadingMessageDiv.remove();
@@ -212,6 +223,14 @@ Cevaplarını bekliyorum, hadi geleceğini birlikte şekillendirelim! 🚀😊`;
 
             return messageDiv;
         }
+
+        // Prompt butonlarına tıklama
+        document.querySelectorAll('.prompt-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                messageInput.value = btn.textContent;
+                messageInput.focus();
+            });
+        });
     </script>
 </body>
 </html>
